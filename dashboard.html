@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Boeing Financial Analysis — Interactive Dashboard</title>
+<meta name="description" content="Interactive dashboard: Boeing 10-year financial ratio analysis and Charleston vs Wichita facility location capital budgeting model." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0c10; --surface:#14181f; --surface-2:#1b212b;
+  --border:rgba(255,255,255,.09); --border-strong:rgba(255,255,255,.16);
+  --text:#ecebe6; --muted:#9098a4;
+  --amber:#f7a93b; --amber-2:#ffc977; --cyan:#34d8c8; --cyan-2:#7af0e4;
+  --display:'Fraunces',Georgia,serif; --body:'Familjen Grotesk',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:60px 28px 100px}
+a{color:var(--amber)}
+header{margin-bottom:50px}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:16px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(30px,4.4vw,50px);letter-spacing:-.02em;margin-bottom:14px}
+header p{color:var(--muted);max-width:640px;font-size:15.5px}
+.back{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:13px;color:var(--muted);border:1px solid var(--border);padding:9px 16px;border-radius:30px;transition:.2s}
+.back:hover{color:var(--amber);border-color:var(--amber)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:26px}
+.panel h2{font-family:var(--display);font-size:22px;font-weight:600;margin-bottom:6px}
+.panel .sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:20px}
+.chart-box{position:relative;height:340px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.kpi .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+.kpi .val{font-family:var(--display);font-size:28px;font-weight:600}
+.kpi .val.win{color:var(--amber)}
+.compare{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:10px}
+.city{border:1px solid var(--border);border-radius:14px;padding:20px}
+.city.win{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 6%,var(--surface))}
+.city h3{font-family:var(--display);font-size:19px;margin-bottom:14px}
+.city .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--border);font-size:14px}
+.city .row:last-child{border:none}
+.city .row span:first-child{color:var(--muted)}
+.city .row span:last-child{font-family:var(--mono);font-weight:600}
+.source{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:10px}
+footer{text-align:center;padding:40px 0;font-family:var(--mono);font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:20px}
+@media(max-width:800px){.grid2,.kpi-row,.compare{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Financial Analysis · Interactive Dashboard</div>
+  <h1>Boeing Company (NYSE: BA)</h1>
+  <p>Ten-year financial ratio analysis from Boeing's own 10-K filings (2015–2024), plus a 30-year capital budgeting model comparing two candidate US facility locations. Every figure below is sourced directly from the underlying report — nothing here is illustrative.</p>
+  <a class="back" href="https://github.com/karthik-kpn/boeing-financial-analysis" target="_blank" rel="noopener">← Full report &amp; data on GitHub</a>
+</header>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="lbl">ROA Peak → 2024</div><div class="val">9.11% → -8.31%</div></div>
+  <div class="kpi"><div class="lbl">DSO Peak (2021)</div><div class="val">66.67 days</div></div>
+  <div class="kpi"><div class="lbl">Wichita IRR</div><div class="val win">23.04%</div></div>
+  <div class="kpi"><div class="lbl">Wichita Payback</div><div class="val win">5 years</div></div>
+</div>
+
+<div class="panel">
+  <h2>Profitability, 2015–2024</h2>
+  <div class="sub">Return on Assets (ROA), Return on Investment (ROI), Return on Equity (ROE) — %</div>
+  <div class="chart-box"><canvas id="profChart"></canvas></div>
+</div>
+
+<div class="grid2">
+  <div class="panel">
+    <h2>Liquidity</h2>
+    <div class="sub">Current Ratio vs. Quick Ratio</div>
+    <div class="chart-box"><canvas id="liqChart"></canvas></div>
+  </div>
+  <div class="panel">
+    <h2>Solvency</h2>
+    <div class="sub">Debt Ratio (total liabilities / total assets)</div>
+    <div class="chart-box"><canvas id="debtChart"></canvas></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Efficiency</h2>
+  <div class="sub">Inventory Turnover (×/year) vs. Days Sales Outstanding (days)</div>
+  <div class="chart-box"><canvas id="effChart"></canvas></div>
+</div>
+
+<div class="panel">
+  <h2>Facility Location Recommendation</h2>
+  <div class="sub">30-year CFAT model · Charleston, SC vs. Wichita, KS</div>
+  <div class="chart-box"><canvas id="facChart"></canvas></div>
+  <div class="compare">
+    <div class="city">
+      <h3>Charleston, SC</h3>
+      <div class="row"><span>IRR</span><span>4.48%</span></div>
+      <div class="row"><span>NPV</span><span>-$67.2M</span></div>
+      <div class="row"><span>Annual Worth</span><span>-$7.13M</span></div>
+      <div class="row"><span>Payback Period</span><span>16 years</span></div>
+    </div>
+    <div class="city win">
+      <h3>Wichita, KS — Recommended</h3>
+      <div class="row"><span>IRR</span><span>23.04%</span></div>
+      <div class="row"><span>NPV</span><span>$185.0M</span></div>
+      <div class="row"><span>Annual Worth</span><span>$19.6M</span></div>
+      <div class="row"><span>Payback Period</span><span>5 years</span></div>
+    </div>
+  </div>
+  <p class="source">Assumptions: $693M projected annual revenue (0.9% of Boeing's $77.8B), MACRS 39-year depreciation, 10% MARR, 30-year project life. Sourced from Boeing 10-K, IRS MACRS tables, and U.S. Bureau of Labor Statistics wage data.</p>
+</div>
+
+<footer>Karthik Krishnagiri Pachiyappan · Data sourced from The Boeing Company's SEC 10-K filings, 2015–2024 · <a href="../index.html">Back to BA Portfolio</a></footer>
+</div>
+
+<script>
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#9098a4';
+const grid = { color: 'rgba(255,255,255,.07)' };
+const years = ['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'];
+
+new Chart(document.getElementById('profChart'), {
+  type: 'line',
+  data: { labels: years, datasets: [
+    { label: 'ROA %', data: [5.31,5.59,8.83,9.11,-0.50,-7.67,-2.88,-3.62,-1.64,-8.31], borderColor: '#f7a93b', backgroundColor: 'transparent', tension: .3 },
+    { label: 'ROI %', data: [47.66,57.08,100.71,116.25,-15.91,-31.71,-6.96,-9.58,-2.48,-29.88], borderColor: '#34d8c8', backgroundColor: 'transparent', tension: .3 },
+    { label: 'ROE %', data: [0.81,5.72,4.94,25.49,0.08,0.66,0.28,0.31,0.13,3.04], borderColor: '#7af0e4', backgroundColor: 'transparent', tension: .3, borderDash: [4,3] }
+  ]},
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#ecebe6'}}}, scales:{ x:{grid}, y:{grid} } }
+});
+
+new Chart(document.getElementById('liqChart'), {
+  type: 'line',
+  data: { labels: years, datasets: [
+    { label: 'Current Ratio', data: [1.35,1.25,1.14,1.08,1.05,1.39,1.33,1.22,1.14,1.32], borderColor: '#f7a93b', backgroundColor: 'rgba(247,169,59,.08)', fill:true, tension:.3 },
+    { label: 'Quick Ratio', data: [0.42,0.39,0.32,0.31,0.26,0.46,0.36,0.35,0.31,0.42], borderColor: '#34d8c8', backgroundColor: 'rgba(52,216,200,.08)', fill:true, tension:.3 }
+  ]},
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#ecebe6'}}}, scales:{ x:{grid}, y:{grid} } }
+});
+
+new Chart(document.getElementById('debtChart'), {
+  type: 'bar',
+  data: { labels: years, datasets: [
+    { label: 'Debt Ratio', data: [0.09,0.11,0.09,0.09,0.15,0.41,0.41,0.38,0.34,0.34], backgroundColor: '#f7a93b' }
+  ]},
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid}, y:{grid,beginAtZero:true} } }
+});
+
+new Chart(document.getElementById('effChart'), {
+  type: 'bar',
+  data: { labels: years, datasets: [
+    { label: 'Inventory Turnover (×)', data: [1.74,1.83,1.25,1.30,0.94,0.78,0.75,0.81,0.88,0.78], backgroundColor: '#34d8c8', yAxisID: 'y' },
+    { label: 'DSO (days)', data: [33.89,36.15,44.25,51.84,59.46,63.08,66.67,61.95,51.92,61.46], type: 'line', borderColor: '#f7a93b', backgroundColor:'transparent', yAxisID: 'y1', tension:.3 }
+  ]},
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#ecebe6'}}},
+    scales:{ x:{grid}, y:{grid,position:'left',title:{display:true,text:'Turnover ×',color:'#9098a4'}}, y1:{position:'right',grid:{display:false},title:{display:true,text:'DSO days',color:'#9098a4'}} } }
+});
+
+new Chart(document.getElementById('facChart'), {
+  type: 'bar',
+  data: { labels: ['IRR (%)','NPV ($M)','Annual Worth ($M)','Payback (yrs, inverted)'],
+    datasets: [
+      { label: 'Charleston, SC', data: [4.48, -67.2, -7.13, -16], backgroundColor: '#9098a4' },
+      { label: 'Wichita, KS', data: [23.04, 185.0, 19.6, -5], backgroundColor: '#f7a93b' }
+    ]},
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#ecebe6'}}}, scales:{ x:{grid}, y:{grid} } }
+});
+</script>
+</body>
+</html>
